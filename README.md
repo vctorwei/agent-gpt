@@ -42,3 +42,5 @@ If streamlit is not working, checkout their [installation page](https://docs.str
 - [ ] Need to revise the prompts for more precise tasks
 
 ---
+
+Replaced serpapi with googlesearch-python
