@@ -1,10 +1,9 @@
 import os
 os.environ["OPENAI_API_KEY"] = ""
-os.environ["SERPAPI_API_KEY"] = ""
 import streamlit as st
 from collections import deque
 from typing import Dict, List, Optional, Any
-
+from googlesearch import search
 from langchain import LLMChain, OpenAI, PromptTemplate
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.llms import BaseLLM
@@ -80,11 +79,19 @@ todo_prompt = PromptTemplate.from_template(
     "You are a planner who is an expert at coming up with a todo list for a given objective. Come up with a todo list for this objective: {objective}"
 )
 todo_chain = LLMChain(llm=OpenAI(temperature=0), prompt=todo_prompt)
-search = SerpAPIWrapper()
+def search_wrapper(query: str, num_results: int = 10, lang: str = "en") -> str:
+    search_results = []
+    try:
+        for result in search(query, num_results=num_results, lang=lang):
+            search_results.append(result)
+        return "\n".join(search_results)
+    except Exception as e:
+        return str(e)
+
 tools = [
     Tool(
         name="Search",
-        func=search.run,
+        func=search_wrapper,
         description="useful for when you need to answer questions about current events",
     ),
     Tool(
@@ -157,7 +164,7 @@ def _get_top_tasks(vectorstore, query: str, k: int) -> List[str]:
 
 
 def execute_task(
-    vectorstore, execution_chain: LLMChain, objective: str, task: str, k: int = 5
+    vectorstore, execution_chain: LLMChain, objective: str, task: str, k: int = 50
 ) -> str:
     """Execute a task."""
     context = _get_top_tasks(vectorstore, query=objective, k=k)
@@ -311,7 +318,7 @@ llm = OpenAI(temperature=0)
 # Logging of LLMChains
 verbose = False
 # If None, will keep on going forever. Customize the number of loops you want it to go through.
-max_iterations: Optional[int] = 2
+max_iterations: Optional[int] = 50
 baby_agi = BabyAGI.from_llm(
     llm=llm, vectorstore=vectorstore, verbose=verbose, max_iterations=max_iterations
 )
